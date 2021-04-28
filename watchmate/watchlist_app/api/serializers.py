@@ -1,54 +1,113 @@
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 
-from watchlist_app.models import Movie
+from watchlist_app.models import WatchList
+from watchlist_app.models import StreamPlatform
+from watchlist_app.models import Reviews
 
 
-class MovieSerializer(serializers.ModelSerializer):
+class PlatformListeningField(serializers.RelatedField):
+    """
+    Foreign Key field will be appearing on the watch list serializer, as return of to_representation func
+    """
 
-    id = serializers.IntegerField(read_only=True)
-    status_value = serializers.SerializerMethodField()
+    def to_representation(self, value):
+        return {
+            "id": value.id,
+            "name": value.name,
+            "about": value.about,
+            "website": value.website
+        }
+
+
+class WatchListListeningField (serializers.RelatedField):
+    """
+    Foreign Key field will be appearing on the watch list serializer, as return of to_representation func
+    """
+
+    def to_representation(self, value):
+        return {
+            "id": value.id,
+            "title": value.title,
+            "storyline": value.storyline,
+            "active": value.active,
+            "created": value.created,
+            "platform": value.platform.name
+
+        }
+
+
+class ReviewsSerializer(serializers.ModelSerializer):
+    """
+    Review Serializer
+    """
+    review_watchlist = WatchListListeningField(read_only=True)
+    review_watchlist_id = serializers.IntegerField(write_only=True)
+
+    # review_watchlist = serializers.SlugRelatedField(
+    #     read_only=True,
+    #     slug_field='title'
+    # )
 
     class Meta:
-        model = Movie
-        fields = ('id', 'name', 'description', 'active', 'status_value')
-        # exclude = ['description']
+        model = Reviews
+        fields = "__all__"
 
-    def create(self, validated_data):
-        if validated_data.get('name') == validated_data.get('description'):
-            raise ValidationError(
-                {'message': "Cannot be same both desc and name"})
-        return super().create(validated_data)
 
-    def validate_name(self, value):
-        if len(value) < 3:
-            raise ValidationError({
-                "message": "Cannot be less than 3 chars"
-            })
-        return value
+class WatchListSerializer(serializers.ModelSerializer):
+    """
+    Watchlist serializer
+    """
+    # platform = serializers.SlugRelatedField(
+    #     read_only=True,
+    #     slug_field='about'
+    # )
+    platform = PlatformListeningField(read_only=True)
+    platform_id = serializers.IntegerField(write_only=True)
 
-    def get_status_value(self, object):
-        if object.active:
-            return "Active Film"
-        else:
-            return "Expired Film"
+    class GhostReviewsSerializer(ReviewsSerializer):
+        review_watchlist = None
 
-# class MovieSerializer(serializers.Serializer):
+        class Meta:
+            model = Reviews
+            exclude = ('review_watchlist',)
 
-#     id = serializers.IntegerField(read_only=True)
-#     name = serializers.CharField()
-#     description = serializers.CharField()
-#     active = serializers.BooleanField()
+    reviews = GhostReviewsSerializer(many=True, read_only=True)
+    rating_average = serializers.SerializerMethodField()
 
-#     def create(self, validated_data):
-#         return Movie.objects.create(**validated_data)
+    class Meta:
+        model = WatchList
+        fields = ('id', 'title', 'storyline',
+                  'active', 'created', 'platform', "rating_average", 'reviews', "platform_id")
 
-#     def update(self, instance, validated_data):
-#         # movie = Movie.objects.filter(pk=instance.id)
-#         # return movie(**validated_data)
-#         instance.name = validated_data.get('name', instance.name)
-#         instance.description = validated_data.get(
-#             'description', instance.description)
-#         instance.active = validated_data.get('active', instance.active)
-#         instance.save()
-#         return instance
+    def get_rating_average(self, obj):
+
+        result = obj.reviews.all().values()
+        list_result = [entry for entry in result]
+        total_rating = 0
+
+        for review in list_result:
+            total_rating += review.get('rating')
+        if len(list_result) == 0:
+            return "No Rating Found"
+        average_rating = total_rating / len(list_result)
+
+        return round(average_rating, 2)
+
+
+class StreamPlatformSerializer(serializers.ModelSerializer):
+    """
+    Stream Platform serializer
+    """
+    class Meta:
+        model = StreamPlatform
+        fields = ('id', 'name', 'about', 'website', 'watchlists')
+
+    class GhostWatchListSerializer(WatchListSerializer):
+        platform = serializers.StringRelatedField()
+
+        class Meta:
+            model = WatchList
+            fields = ('id', 'title', 'storyline',
+                      'active', 'platform', "rating_average")
+
+    watchlists = GhostWatchListSerializer(many=True, read_only=True)
