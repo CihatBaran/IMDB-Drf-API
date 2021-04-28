@@ -64,14 +64,14 @@ class WatchListSerializer(serializers.ModelSerializer):
     platform = PlatformListeningField(read_only=True)
     platform_id = serializers.IntegerField(write_only=True)
 
-    class GhostReviewsSerializer(ReviewsSerializer):
+    class CloneReviewsSerializer(ReviewsSerializer):
         review_watchlist = None
 
         class Meta:
             model = Reviews
             exclude = ('review_watchlist',)
 
-    reviews = GhostReviewsSerializer(many=True, read_only=True)
+    reviews = CloneReviewsSerializer(many=True, read_only=True)
     rating_average = serializers.SerializerMethodField()
 
     class Meta:
@@ -102,7 +102,7 @@ class StreamPlatformSerializer(serializers.ModelSerializer):
         model = StreamPlatform
         fields = ('id', 'name', 'about', 'website', 'watchlists')
 
-    class GhostWatchListSerializer(WatchListSerializer):
+    class CloneWatchListSerializer(WatchListSerializer):
         platform = serializers.StringRelatedField()
 
         class Meta:
@@ -110,4 +110,4 @@ class StreamPlatformSerializer(serializers.ModelSerializer):
             fields = ('id', 'title', 'storyline',
                       'active', 'platform', "rating_average")
 
-    watchlists = GhostWatchListSerializer(many=True, read_only=True)
+    watchlists = CloneWatchListSerializer(many=True, read_only=True)
