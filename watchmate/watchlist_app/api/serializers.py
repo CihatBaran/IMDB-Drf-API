@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from watchlist_app.models import WatchList
 from watchlist_app.models import StreamPlatform
@@ -41,16 +42,25 @@ class ReviewsSerializer(serializers.ModelSerializer):
     Review Serializer
     """
     review_watchlist = WatchListListeningField(read_only=True)
-    review_watchlist_id = serializers.IntegerField(write_only=True)
-
-    # review_watchlist = serializers.SlugRelatedField(
-    #     read_only=True,
-    #     slug_field='title'
-    # )
+    review_user = serializers.StringRelatedField()
 
     class Meta:
         model = Reviews
         fields = "__all__"
+
+    def rating_validation(self, rating):
+        if rating < 2:
+            raise ValidationError({
+                'message': 'rating cannot be less than 2'
+            })
+
+    def create(self, validated_data):
+        self.rating_validation(validated_data.get('rating'))
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        self.rating_validation(validated_data.get('rating'))
+        return super().update(instance, validated_data)
 
 
 class WatchListSerializer(serializers.ModelSerializer):
@@ -62,7 +72,10 @@ class WatchListSerializer(serializers.ModelSerializer):
     #     slug_field='about'
     # )
     platform = PlatformListeningField(read_only=True)
-    platform_id = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = WatchList
+        fields = "__all__"
 
     class CloneReviewsSerializer(ReviewsSerializer):
         review_watchlist = None
@@ -74,13 +87,7 @@ class WatchListSerializer(serializers.ModelSerializer):
     reviews = CloneReviewsSerializer(many=True, read_only=True)
     rating_average = serializers.SerializerMethodField()
 
-    class Meta:
-        model = WatchList
-        fields = ('id', 'title', 'storyline',
-                  'active', 'created', 'platform', "rating_average", 'reviews', "platform_id")
-
     def get_rating_average(self, obj):
-
         result = obj.reviews.all().values()
         list_result = [entry for entry in result]
         total_rating = 0

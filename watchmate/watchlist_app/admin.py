@@ -31,9 +31,13 @@ class ReviewsModelAdmin(admin.ModelAdmin):
     def get_review_watchlist(self, obj):
         return obj.review_watchlist.title
 
-    list_display = ('rating', 'get_review_watchlist')
+    list_display = ('rating', 'get_review_watchlist',
+                    'description', 'review_user')
 
-    search_fields = ('rating', 'review_watchlist__title')
+    search_fields = ('rating', 'review_watchlist__title',
+                     'review_user__username')
+
+    ordering = ('review_watchlist__title',)
 
     class Meta:
         model = Reviews

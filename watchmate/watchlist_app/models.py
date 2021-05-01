@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.auth.models import User
 
 
 class StreamPlatform(models.Model):
@@ -43,6 +44,9 @@ class Reviews(models.Model):
 
     review_watchlist = models.ForeignKey(
         WatchList, on_delete=models.CASCADE, related_name="reviews")
+
+    review_user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="users")
 
     def __str__(self):
         return str(self.rating) + " / " + self.review_watchlist.title
