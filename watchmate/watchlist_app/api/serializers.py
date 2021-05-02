@@ -1,3 +1,8 @@
+from django.db.models import Avg
+from django.db.models import Count
+from django.db.models import Max
+from django.db.models import Min
+
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -86,19 +91,39 @@ class WatchListSerializer(serializers.ModelSerializer):
 
     reviews = CloneReviewsSerializer(many=True, read_only=True)
     rating_average = serializers.SerializerMethodField()
+    reviews_count = serializers.SerializerMethodField()
+    reviews_max = serializers.SerializerMethodField()
+    reviews_min = serializers.SerializerMethodField()
 
     def get_rating_average(self, obj):
-        result = obj.reviews.all().values()
-        list_result = [entry for entry in result]
-        total_rating = 0
+        # result = obj.reviews.all().values()
+        # list_result = [entry for entry in result]
+        # total_rating = 0
 
-        for review in list_result:
-            total_rating += review.get('rating')
-        if len(list_result) == 0:
-            return "No Rating Found"
-        average_rating = total_rating / len(list_result)
+        # for review in list_result:
+        #     total_rating += review.get('rating')
+        # if len(list_result) == 0:
+        #     return "No Rating Found"
+        # average_rating = total_rating / len(list_result)
+        rating_average = obj.reviews.all().aggregate(Avg('rating')).get('rating__avg')
 
-        return round(average_rating, 2)
+        if rating_average is not None:
+            return round(rating_average, 2)
+
+    def get_reviews_count(self, obj):
+        count = obj.reviews.all().aggregate(Count('rating')).get('rating__count')
+        if count is not None:
+            return count
+
+    def get_reviews_max(self, obj):
+        max_review = obj.reviews.all().aggregate(Max('rating')).get('rating__max')
+        if max_review is not None:
+            return max_review
+
+    def get_reviews_min(self, obj):
+        max_review = obj.reviews.all().aggregate(Min('rating')).get('rating__min')
+        if max_review is not None:
+            return max_review
 
 
 class StreamPlatformSerializer(serializers.ModelSerializer):

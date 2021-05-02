@@ -27,10 +27,10 @@ class StaffAdminOrReadOnly(permissions.IsAdminUser):
         """
         Return `True` if permission is granted, `False` otherwise.
         """
+        staff_permission = bool(request.user and request.user.is_staff)
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        staff_permission = bool(request.user and request.user.is_staff)
         return staff_permission
 
 
@@ -39,12 +39,9 @@ class ReviewUserOrReadOnly(permissions.BasePermission):
         """
         Return `True` if permission is granted, `False` otherwise.
         """
-        should_grant = obj.review_user == request.user
+        should_grant = bool(obj.review_user == request.user)
 
-        if request.method in permissions.SAFE_METHODS:
-            return True
-
-        if should_grant or request.user.is_superuser:
+        if request.method in ('GET', 'HEAD', 'OPTIONS'):
             return True
         else:
-            return False
+            return should_grant or request.user.is_superuser
