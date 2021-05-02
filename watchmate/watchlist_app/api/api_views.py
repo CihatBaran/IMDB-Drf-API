@@ -10,7 +10,6 @@ from watchlist_app.api.permissions import AdminOrReadOnly
 from watchlist_app.api.permissions import StaffAdminOrReadOnly
 from watchlist_app.api.permissions import ReviewUserOrReadOnly
 
-
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import RetrieveUpdateDestroyAPIView

@@ -1,14 +1,16 @@
-from django.db.models import Avg
-from django.db.models import Count
-from django.db.models import Max
-from django.db.models import Min
-
-from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
-
-from watchlist_app.models import WatchList
-from watchlist_app.models import StreamPlatform
 from watchlist_app.models import Reviews
+from watchlist_app.models import StreamPlatform
+from watchlist_app.models import WatchList
+from rest_framework.exceptions import ValidationError
+from rest_framework import serializers
+from django.db.models import (Avg, Count, Max, Min)
+from django.db.models import Min
+from django.db.models import Max
+from django.db.models import Count
+from django.db.models import Avg
+<< << << < Updated upstream
+== == == =
+>>>>>> > Stashed changes
 
 
 class PlatformListeningField(serializers.RelatedField):
@@ -96,15 +98,6 @@ class WatchListSerializer(serializers.ModelSerializer):
     reviews_min = serializers.SerializerMethodField()
 
     def get_rating_average(self, obj):
-        # result = obj.reviews.all().values()
-        # list_result = [entry for entry in result]
-        # total_rating = 0
-
-        # for review in list_result:
-        #     total_rating += review.get('rating')
-        # if len(list_result) == 0:
-        #     return "No Rating Found"
-        # average_rating = total_rating / len(list_result)
         rating_average = obj.reviews.all().aggregate(Avg('rating')).get('rating__avg')
 
         if rating_average is not None:
