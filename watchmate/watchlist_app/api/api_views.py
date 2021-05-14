@@ -24,6 +24,9 @@ from rest_framework.viewsets import ViewSet, ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
+from drf_spectacular.utils import OpenApiParameter, extend_schema, OpenApiExample
+from drf_spectacular.types import OpenApiTypes
+
 
 class WatchListAPI(ListCreateAPIView):
     """
@@ -35,6 +38,28 @@ class WatchListAPI(ListCreateAPIView):
 
     class CloneWatchlistSerializer(WatchListSerializer):
         platform = None
+
+    @extend_schema(parameters=[
+        OpenApiParameter(
+            name='artist', description='Filter by artist', required=False, type=str),
+        OpenApiParameter(
+            name='release',
+            type=OpenApiTypes.DATE,
+            location=OpenApiParameter.QUERY,
+            description='Filter by release date',
+            examples=[
+                OpenApiExample(
+                        'Example 1',
+                        summary='short optional summary',
+                        description='longer description',
+                        value='1993-08-23'
+                ),
+                ...
+            ],
+        ),
+    ])
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
         serializer = self.CloneWatchlistSerializer(data=request.data)

@@ -8,9 +8,6 @@ from django.db.models import Min
 from django.db.models import Max
 from django.db.models import Count
 from django.db.models import Avg
-<< << << < Updated upstream
-== == == =
->>>>>> > Stashed changes
 
 
 class PlatformListeningField(serializers.RelatedField):
